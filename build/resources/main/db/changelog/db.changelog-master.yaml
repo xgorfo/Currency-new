@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: user
+      changes:
+        - createTable:
+            tableName: currency_entity
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: base_currency
+                  type: varchar(255)
+              - column:
+                  name: price_change_range
+                  type: varchar(255)
+              - column:
+                  name: description
+                  type: varchar(255)
