@@ -2,6 +2,7 @@ package com.example.currencytracking.job;
 
 import com.example.currencytracking.entity.CurrencyEntity;
 import com.example.currencytracking.repository.CurrencyRepository;
+import com.example.currencytracking.service.TelegramService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,15 +16,16 @@ import java.util.List;
 public class CurrencyCheckJob {
 
     private final CurrencyRepository currencyRepository;
-    private final RestTemplate restTemplate;
+    private final TelegramService telegramService;
+    private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public CurrencyCheckJob(CurrencyRepository currencyRepository) {
+    public CurrencyCheckJob(CurrencyRepository currencyRepository, TelegramService telegramService) {
         this.currencyRepository = currencyRepository;
-        this.restTemplate = new RestTemplate();
+        this.telegramService = telegramService;
     }
 
-    @Scheduled(fixedRate = 3600000) // каждый час
+    @Scheduled(fixedRate = 3600000)
     public void checkCurrencies() {
         try {
             String url = "https://www.cbr-xml-daily.ru/daily_json.js";
@@ -40,11 +42,11 @@ public class CurrencyCheckJob {
                     BigDecimal previous = currencyNode.get("Previous").decimalValue();
 
                     BigDecimal changePercent = current.subtract(previous)
-                            .divide(previous, 4, BigDecimal.ROUND_HALF_UP)
-                            .multiply(BigDecimal.valueOf(100));
+                        .divide(previous, 4, BigDecimal.ROUND_HALF_UP)
+                        .multiply(BigDecimal.valueOf(100));
 
                     if (isChangeSignificant(changePercent, currency.getPriceChangeRange())) {
-                        System.out.println("🔔 Уведомление: " + currency.getDescription());
+                        telegramService.sendMessage("🔔 " + currency.getDescription());
                     }
                 }
             }
@@ -56,8 +58,8 @@ public class CurrencyCheckJob {
     private boolean isChangeSignificant(BigDecimal change, String priceChangeRange) {
         try {
             String[] parts = priceChangeRange.replace("%", "").split("/");
-            BigDecimal up = new BigDecimal(parts[0]);
-            BigDecimal down = new BigDecimal(parts[1]);
+            BigDecimal down = new BigDecimal(parts[0]);
+            BigDecimal up = new BigDecimal(parts[1]);
 
             return change.compareTo(up) >= 0 || change.compareTo(down) <= 0;
         } catch (Exception e) {

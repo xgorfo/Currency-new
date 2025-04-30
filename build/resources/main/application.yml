@@ -13,5 +13,9 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+telegram:
+  bot-token: "7788541518:AAEVPvnJ4LhmNX9ax12RjLjbjp3U6JznS90"
+  chat-id: "1142967622"
+
 server:
   port: 8080
